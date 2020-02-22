@@ -1,0 +1,343 @@
+---
+title: 'Reporte de citas de la obra del Dr. Alejandro Reyes Quiroz'
+author: "2020-02-05"
+date: 
+output:
+  html_document:
+    df_print: paged
+  pdf_document:
+    toc: false
+    toc_depth: 2
+    number_sections: true
+header-includes: 
+- \usepackage{placeins}
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set( echo = FALSE, cache=FALSE, message=FALSE )
+```
+
+
+```{r, echo=FALSE, results="hide"}
+library(scholar)
+library(magrittr)
+
+googleScholarData <- get_publications("8QLuIWgAAAAJ")
+googleScholarData <- googleScholarData[googleScholarData$journal != "bioRxiv",]
+googleScholarData[,"title"] <- gsub("\\.", "", googleScholarData[,"title"])
+
+#pubs <- data.table::fread(file.path("..", "data", "raw", "00_mypubs.tsv"), sep="\t", quote="", 
+#                          select=c(2, 10, 18, 29, 33), header=FALSE)
+
+pubs <- data.table::fread(file.path("..", "data", "simple", "00_mypubs_simple.tsv"), sep="\t", quote="")
+pubs$char <- tolower(sapply(strsplit(as.character(pubs$TI), " |-"), "[[", 1))
+googleScholarData$char <- tolower(sapply(strsplit(as.character(googleScholarData$title), " |-"), "[[", 1))
+
+
+googleScholarData <- dplyr::full_join( googleScholarData, pubs )
+googleScholarData <- googleScholarData[order( googleScholarData$year, decreasing=TRUE ),]
+googleScholarData$myid <- sprintf("obra%0.4d", seq_len(nrow(googleScholarData)))
+
+
+allCitations <- lapply( seq_len(nrow(googleScholarData)), function(i){
+  print(i)
+  firstWord <- tolower(sapply( strsplit( googleScholarData$title[i], " |-" ), "[[", 1 ))
+  journal <- gsub( " ", "", toupper(as.character(googleScholarData$journal[i])) )
+  yr <- googleScholarData$year[i]
+  fl <- paste0(paste(yr, journal, firstWord, sep="_"), "_simple.tsv")
+  authors <- strsplit( googleScholarData$AU[i], "; " )[[1]]
+  dat <- data.table::fread(file.path("..", "data", "simple", fl), sep="\t", quote="", header=TRUE)
+  dat$PT_split <- strsplit( as.character(dat$AU), "; " )
+  dat$citingid <- sprintf("pub%0.8d", seq_len(nrow(dat)))
+  autorData <- tidyr::unnest(dat[,c("PT_split", "citingid")], cols = c(PT_split))
+  autorData$is_autocitation <- autorData$PT_split %in% authors
+  autorData <- autorData %>%
+    dplyr::group_by( citingid ) %>%
+    dplyr::summarise( is_autocitation=sum(is_autocitation) >0 )
+  dat <- dplyr::left_join( dat, autorData )
+  dat$is_citing <- googleScholarData$myid[i]
+  dat
+} )
+
+allCitations <- dplyr::bind_rows( allCitations )
+allCitations <- allCitations[!is.na(allCitations$is_autocitation),]
+
+tr_citas <- allCitations %>%
+    dplyr::mutate( tipo=factor(ifelse( is_autocitation, "# autocitas (Web of Science)", 
+                                "# citas (Web of Science, excluyendo autocitas)" ), 
+                               levels=c("# autocitas (Web of Science)", "# citas (Web of Science, excluyendo autocitas)" ))) %>%
+    dplyr::group_by( is_citing, tipo, .drop=FALSE) %>%
+    dplyr::summarise( numero=dplyr::n() ) %>% 
+  as.data.frame()
+
+tr_citas <- googleScholarData %>%
+  dplyr::select( myid, cites ) %>%
+  dplyr::rename( is_citing=myid, numero=cites ) %>%
+  dplyr::mutate( tipo="# citas (Google Scholar)" ) %>%
+  dplyr::select( is_citing, tipo, numero ) %>%
+  as.data.frame() %>%
+  rbind( tr_citas )
+
+googleScholarData$citingString <- sprintf("%s. %s, %s.", googleScholarData$TI, googleScholarData$SO, googleScholarData$PY)
+
+tr_citas <- tidyr::pivot_wider( tr_citas, names_from="tipo", values_from="numero" )
+
+tr_citas <- googleScholarData[,c("myid", "citingString", "DI")] %>%
+  dplyr::rename( `Obra del Dr. Alejandro Reyes Quiroz`=citingString, is_citing=myid, DOI=DI ) %>%
+  dplyr::full_join( tr_citas )
+
+tr_citas$is_citing <- NULL
+
+colnames(tr_citas)
+
+library(xtable)
+tr_citas <- rbind( tr_citas, 
+       data.frame(
+         `Obra del Dr. Alejandro Reyes Quiroz`="TOTAL", 
+         DOI="", 
+         `# citas (Google Scholar)`=sum(tr_citas$`# citas (Google Scholar)`),
+         `# autocitas (Web of Science)`=sum(tr_citas$`# autocitas (Web of Science)`),
+         `# citas (Web of Science, excluyendo autocitas)`=sum(tr_citas$`# citas (Web of Science, excluyendo autocitas)`), 
+         check.names = FALSE) )
+```
+
+\newpage
+
+
+```{r, results="asis"}
+options(xtable.comment = FALSE)
+
+print( xtable( tr_citas,
+              caption="Esta tabla resume el n\\'umero de citas de cada uno de mis art\\'iculos publicados.
+Los datos de las citas fueron colectados el d\\'ia 5 de Febrero del 2020. La primera columna indica el nombre
+de la obra y la segunda el identificador DOI. La tercera columna indica el n\\'umero de citas de acuerdo a
+Google Scholar, la cuarta columna indica el n\\'umero de autocitas deacuerdo a Web Of Science y la
+quinta columna indica el n\\'umero de citas (sin incluir autocitas) deacuerdo a Web Of Science.",
+display=c("d", "s", "s", "d", "d", "d" ),
+              align=c("p{0.01\\textwidth}", "p{0.27\\textwidth}", "p{0.23\\textwidth}",
+                      "p{0.13\\textwidth}", "p{0.13\\textwidth}", "p{0.13\\textwidth}" ) ),
+hline.after=seq(0, nrow(tr_citas), 1),
+      size="\\footnotesize" )
+
+```
+
+```{r}
+allCitations$citingString <-  sprintf( "%s et al. %s. %s, %s. doi: %s", 
+        sapply( allCitations$PT_split, "[[", 1 ), 
+        allCitations$TI, allCitations$SO, allCitations$PY, 
+        allCitations$DI )
+```
+
+
+```{r}
+printCitations <- function( df, pubid, autocitations=FALSE ){
+  if( autocitations ){
+    df$is_autocitation <- !df$is_autocitation
+  }
+  strgs <- df$citingString[!df$is_autocitation & df$is_citing == pubid]
+  if( length(strgs) == 0 ){
+    return(invisible())
+  }
+  write.table(sprintf("%d. %s", seq_along(strgs), strgs), col.names=FALSE, row.names=FALSE, quote=FALSE)
+}
+```
+
+\newpage
+\FloatBarrier
+
+\tableofcontents
+
+\newpage
+\FloatBarrier
+
+# Citas de la obra: `r googleScholarData$citingString[googleScholarData$myid == "obra0001"]`
+## Autocitas (Web of Science)
+```{r, results="asis"}
+printCitations( allCitations, "obra0001", autocitations=TRUE )
+```
+## Citas (Web of Science)
+```{r, results="asis"}
+printCitations( allCitations, "obra0001", autocitations=FALSE )
+```
+
+\newpage
+\FloatBarrier
+
+# Citas de la obra: `r googleScholarData$citingString[googleScholarData$myid == "obra0002"]`
+## Autocitas (Web of Science)
+```{r, results="asis"}
+printCitations( allCitations, "obra0002", autocitations=TRUE )
+```
+
+## Citas (Web of Science)
+```{r, results="asis"}
+printCitations( allCitations, "obra0002", autocitations=FALSE )
+```
+
+\newpage
+\FloatBarrier
+
+# Citas de la obra: `r googleScholarData$citingString[googleScholarData$myid == "obra0003"]`
+## Autocitas (Web of Science)
+```{r, results="asis"}
+printCitations( allCitations, "obra0003", autocitations=TRUE )
+```
+
+## Citas (Web of Science)
+```{r, results="asis"}
+printCitations( allCitations, "obra0003", autocitations=FALSE )
+```
+
+\newpage
+\FloatBarrier
+
+# Citas de la obra: `r googleScholarData$citingString[googleScholarData$myid == "obra0004"]`
+## Autocitas (Web of Science)
+```{r, results="asis"}
+printCitations( allCitations, "obra0004", autocitations=TRUE )
+```
+
+## Citas (Web of Science)
+```{r, results="asis"}
+printCitations( allCitations, "obra0004", autocitations=FALSE )
+```
+
+\newpage
+\FloatBarrier
+
+# Citas de la obra: `r googleScholarData$citingString[googleScholarData$myid == "obra0005"]`
+## Autocitas (Web of Science)
+```{r, results="asis"}
+printCitations( allCitations, "obra0005", autocitations=TRUE )
+```
+
+## Citas (Web of Science)
+```{r, results="asis"}
+printCitations( allCitations, "obra0005", autocitations=FALSE )
+```
+
+\newpage
+\FloatBarrier
+
+# Citas de la obra: `r googleScholarData$citingString[googleScholarData$myid == "obra0006"]`
+## Autocitas (Web of Science)
+```{r, results="asis"}
+printCitations( allCitations, "obra0006", autocitations=TRUE )
+```
+
+## Citas (Web of Science)
+```{r, results="asis"}
+printCitations( allCitations, "obra0006", autocitations=FALSE )
+```
+
+\newpage
+\FloatBarrier
+
+# Citas de la obra: `r googleScholarData$citingString[googleScholarData$myid == "obra0007"]`
+## Autocitas (Web of Science)
+```{r, results="asis"}
+printCitations( allCitations, "obra0007", autocitations=TRUE )
+```
+
+## Citas (Web of Science)
+```{r, results="asis"}
+printCitations( allCitations, "obra0007", autocitations=FALSE )
+```
+
+\newpage
+\FloatBarrier
+
+# Citas de la obra: `r googleScholarData$citingString[googleScholarData$myid == "obra0008"]`
+## Autocitas (Web of Science)
+```{r, results="asis"}
+printCitations( allCitations, "obra0008", autocitations=TRUE )
+```
+
+## Citas (Web of Science)
+```{r, results="asis"}
+printCitations( allCitations, "obra0008", autocitations=FALSE )
+```
+
+\newpage
+\FloatBarrier
+
+# Citas de la obra: `r googleScholarData$citingString[googleScholarData$myid == "obra0009"]`
+## Autocitas (Web of Science)
+```{r, results="asis"}
+printCitations( allCitations, "obra0009", autocitations=TRUE )
+```
+
+## Citas (Web of Science)
+```{r, results="asis"}
+printCitations( allCitations, "obra0009", autocitations=FALSE )
+```
+
+\newpage
+\FloatBarrier
+
+# Citas de la obra: `r googleScholarData$citingString[googleScholarData$myid == "obra0010"]`
+## Autocitas (Web of Science)
+```{r, results="asis"}
+printCitations( allCitations, "obra0010", autocitations=TRUE )
+```
+
+## Citas (Web of Science)
+```{r, results="asis"}
+printCitations( allCitations, "obra0010", autocitations=FALSE )
+```
+
+\newpage
+\FloatBarrier
+
+# Citas de la obra: `r googleScholarData$citingString[googleScholarData$myid == "obra0011"]`
+## Autocitas (Web of Science)
+```{r, results="asis"}
+printCitations( allCitations, "obra0011", autocitations=TRUE )
+```
+
+## Citas (Web of Science)
+```{r, results="asis"}
+printCitations( allCitations, "obra0011", autocitations=FALSE )
+```
+
+\newpage
+\FloatBarrier
+
+# Citas de la obra: `r googleScholarData$citingString[googleScholarData$myid == "obra0012"]`
+## Autocitas (Web of Science)
+```{r, results="asis"}
+printCitations( allCitations, "obra0012", autocitations=TRUE )
+```
+
+## Citas (Web of Science)
+```{r, results="asis"}
+printCitations( allCitations, "obra0012", autocitations=FALSE )
+```
+
+\newpage
+\FloatBarrier
+
+# Citas de la obra: `r googleScholarData$citingString[googleScholarData$myid == "obra0013"]`
+## Autocitas (Web of Science)
+```{r, results="asis"}
+printCitations( allCitations, "obra0013", autocitations=TRUE )
+```
+
+## Citas (Web of Science)
+```{r, results="asis"}
+printCitations( allCitations, "obra0013", autocitations=FALSE )
+```
+
+\newpage
+\FloatBarrier
+
+# Citas de la obra: `r googleScholarData$citingString[googleScholarData$myid == "obra0014"]`
+## Autocitas (Web of Science)
+```{r, results="asis"}
+printCitations( allCitations, "obra0014", autocitations=TRUE )
+```
+
+## Citas (Web of Science)
+```{r, results="asis"}
+printCitations( allCitations, "obra0014", autocitations=FALSE )
+```
