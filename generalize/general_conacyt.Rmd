@@ -29,8 +29,13 @@ knitr::opts_chunk$set( echo = FALSE, cache=FALSE, message=FALSE )
 ```{r, echo=FALSE, results="asis"}
 library(magrittr)
 
+## Change the line below to add your date
 myPubs <- read.delim("00_mypubs_simple.tsv")
 myPubs$myid <- sprintf("obra%0.4d", seq_len(nrow(myPubs)))
+
+myPubs <- myPubs[order(myPubs$PY, decreasing=TRUE),]
+
+## Change the line below to the place where you have your tsv files
 dataPath <- file.path("..", "data", "raw")
 
 allCitations <- lapply( seq_len(nrow(myPubs)), function(i){
