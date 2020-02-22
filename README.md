@@ -28,7 +28,7 @@ publication and the expected columns are:
     * Title of the document in line 2: `title: "Reporte de citas de las publicaciones del Dr. Alejandro Reyes Quiroz"`
     * The `fecha` variable in line 33. Change the date to indicate when you retreived the data in step 2. `fecha <- "5 de Febrero del 2020"`
     * The file name in line 35 to indicate the path to the file generated in step 3. `myPubs <- read.delim("00_mypubs_simple.tsv")`.
-    * The `fecha` Variable in line 46 to indicate the path 
-    to the files that you downloaded in step 2. `dataPath <- file.path("..", "data", "raw")`
+    * The `fecha` variable in line 46 to indicate the path 
+    to the directory where you downloaded the files in step 2. `dataPath <- file.path("..", "data", "raw")`
 
 5. Finally, knitr the document as a word document and the print it as a pdf. You should see a nice citation report.
