@@ -29,11 +29,14 @@ knitr::opts_chunk$set( echo = FALSE, cache=FALSE, message=FALSE )
 ```{r, echo=FALSE, results="asis"}
 library(magrittr)
 
-## Change the line below to add your date
-myPubs <- read.delim("00_mypubs_simple.tsv")
-myPubs$myid <- sprintf("obra%0.4d", seq_len(nrow(myPubs)))
+### Change the line below to specify the date you extracted the data from Web of Science
+fecha <- "5 de Febrero del 2020"
+
+## Change the line below to add the path to the tsv with your list of publications ###
+myPubs <- read.delim("00_mypubs_simple_2.tsv")
 
 myPubs <- myPubs[order(myPubs$PY, decreasing=TRUE),]
+myPubs$myid <- sprintf("obra%0.4d", seq_len(nrow(myPubs)))
 
 ## Change the line below to the place where you have your tsv files
 dataPath <- file.path("..", "data", "raw")
@@ -72,8 +75,8 @@ myPubs$citingString <- sprintf("%s. %s, %s.", myPubs$TI, myPubs$SO, myPubs$PY)
 
 tr_citas <- tidyr::pivot_wider( tr_citas, names_from="tipo", values_from="numero" )
 
-tr_citas <- myPubs[,c("myid", "citingString", "DI")] %>%
-  dplyr::rename( `Publicación`=citingString, is_citing=myid, DOI=DI ) %>%
+tr_citas <- myPubs[,c("myid", "citingString")] %>%
+  dplyr::rename( `Publicación`=citingString, is_citing=myid ) %>%
   dplyr::full_join( tr_citas )
 
 
@@ -81,7 +84,10 @@ tr_citas$is_citing <- as.numeric(factor(tr_citas$is_citing))
 tr_citas <- dplyr::rename( tr_citas, ` `=is_citing )
 
 library(knitr)
-kable(tr_citas, caption="Los datos de las citas fueron colectados el día 5 de Febrero del 2020 de la base de datos de Web of Science.")
+kable(tr_citas, 
+      caption=sprintf("Los datos de las citas fueron 
+      colectados el día %s de 
+      la base de datos de Web of Science.", fecha) )
 ```
 
 
