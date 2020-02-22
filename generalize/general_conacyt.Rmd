@@ -33,7 +33,7 @@ library(magrittr)
 fecha <- "5 de Febrero del 2020"
 
 ## Change the line below to add the path to the tsv with your list of publications ###
-myPubs <- read.delim("00_mypubs_simple_2.tsv")
+myPubs <- read.delim("00_mypubs_simple.tsv")
 
 myPubs <- myPubs[order(myPubs$PY, decreasing=TRUE),]
 myPubs$myid <- sprintf("obra%0.4d", seq_len(nrow(myPubs)))
