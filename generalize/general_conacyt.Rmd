@@ -1,0 +1,120 @@
+---
+title: "Reporte de citas de las publicaciones del Dr. Alejandro Reyes Quiroz"
+author: 
+date: 
+output:
+  word_document:
+    toc: yes
+    toc_depth: '2'
+  pdf_document:
+    number_sections: yes
+    toc: no
+    toc_depth: 2
+  html_document:
+    number_sections: yes
+    df_print: paged
+    toc: yes
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set( echo = FALSE, cache=FALSE, message=FALSE )
+```
+
+```{=openxml}
+<w:p><w:r><w:br w:type="page"/></w:r></w:p>
+```
+
+# Tabla con resumen de citas
+
+```{r, echo=FALSE, results="asis"}
+library(magrittr)
+
+myPubs <- read.delim("00_mypubs_simple.tsv")
+myPubs$myid <- sprintf("obra%0.4d", seq_len(nrow(myPubs)))
+dataPath <- file.path("..", "data", "raw")
+
+allCitations <- lapply( seq_len(nrow(myPubs)), function(i){
+  fl <- file.path( dataPath, as.character(myPubs$FL[i]) )
+  stopifnot( file.exists( fl ) )
+  authors <- strsplit( as.character(myPubs$AU)[i], "; " )[[1]]
+  dat <- data.table::fread( fl, sep="\t", quote="", header=FALSE, 
+                            select=c(2, 10, 18, 29, 33) )
+  colnames(dat) <- c("AU", "TI", "SO", "DI", "PY" )
+  dat$PT_split <- strsplit( as.character(dat$AU), "; " )
+  dat$citingid <- sprintf("pub%0.8d", seq_len(nrow(dat)))
+  autorData <- tidyr::unnest(dat[,c("PT_split", "citingid")], cols = c(PT_split))
+  autorData$is_autocitation <- autorData$PT_split %in% authors
+  autorData <- autorData %>%
+    dplyr::group_by( citingid ) %>%
+    dplyr::summarise( is_autocitation=sum(is_autocitation) >0 )
+  dat <- dplyr::left_join( dat, autorData )
+  dat$is_citing <- myPubs$myid[i]
+  dat
+} )
+
+allCitations <- dplyr::bind_rows( allCitations )
+allCitations <- allCitations[!is.na(allCitations$is_autocitation),]
+
+tr_citas <- allCitations %>%
+    dplyr::mutate( tipo=factor(ifelse( is_autocitation, "# citas tipo B", 
+                                "# citas tipo A" ), 
+                               levels=c("# citas tipo B", "# citas tipo A" ))) %>%
+    dplyr::group_by( is_citing, tipo, .drop=FALSE) %>%
+    dplyr::summarise( numero=dplyr::n() ) %>% 
+  as.data.frame()
+
+myPubs$citingString <- sprintf("%s. %s, %s.", myPubs$TI, myPubs$SO, myPubs$PY)
+
+tr_citas <- tidyr::pivot_wider( tr_citas, names_from="tipo", values_from="numero" )
+
+tr_citas <- myPubs[,c("myid", "citingString", "DI")] %>%
+  dplyr::rename( `Publicación`=citingString, is_citing=myid, DOI=DI ) %>%
+  dplyr::full_join( tr_citas )
+
+
+tr_citas$is_citing <- as.numeric(factor(tr_citas$is_citing))
+tr_citas <- dplyr::rename( tr_citas, ` `=is_citing )
+
+library(knitr)
+kable(tr_citas, caption="Los datos de las citas fueron colectados el día 5 de Febrero del 2020 de la base de datos de Web of Science.")
+```
+
+
+```{r}
+allCitations$citingString <-  sprintf( "%s et al. %s. %s, %s. doi: %s", 
+        sapply( allCitations$PT_split, "[[", 1 ), 
+        allCitations$TI, allCitations$SO, allCitations$PY, 
+        allCitations$DI )
+```
+
+
+```{r}
+printCitations <- function( df, pubid, autocitations=FALSE ){
+  if( autocitations ){
+    df$is_autocitation <- !df$is_autocitation
+  }
+  strgs <- df$citingString[!df$is_autocitation & df$is_citing == pubid]
+  if( length(strgs) == 0 ){
+    return(invisible())
+  }
+  write.table(sprintf("%d. %s", seq_along(strgs), strgs), col.names=FALSE, row.names=FALSE, quote=FALSE)
+}
+```
+
+```{=openxml}
+<w:p><w:r><w:br w:type="page"/></w:r></w:p>
+```
+
+
+```{r, results="asis"}
+
+for( i in myPubs$myid ){
+  cat(sprintf("# Citas de la publicación: %s\n\n## Citas tipo A (Web of Science)\n", myPubs$citingString[myPubs$myid == i] ) ) 
+  printCitations( allCitations, i, autocitations=FALSE )
+  cat("\n## Citas tipo B (Web of Science)\n")
+  printCitations( allCitations, i, autocitations=TRUE )
+  cat("\n")
+}
+
+```
+
