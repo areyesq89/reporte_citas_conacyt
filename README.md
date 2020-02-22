@@ -23,7 +23,7 @@ publication and the expected columns are:
     I generated this file by doing in linux `cut -f2,10,18,29,33 00_mypubs.tsv > 00_mypubs_simple.tsv`. Here, the file `00_mypubs.tsv` 
     is the one downloaded from step 1. I then added and filled the column `FL` manually.
   
-4. Clone this repository and open the file [`generalize/general_conacyt.Rmd`](https://github.com/areyesq89/reporte_citas_conacyt/blob/master/generalize/general_conacyt.Rmd) using Rstudio. Modify the following lines from the Rmarkdown file:
+4. Clone this repository and open the file [`generalize/general_conacyt.Rmd`](https://github.com/areyesq89/reporte_citas_conacyt/blob/master/generalize/general_conacyt.Rmd) using Rstudio. Modify the following lines of the Rmarkdown file:
 
     * Title of the document in line 2: `title: "Reporte de citas de las publicaciones del Dr. Alejandro Reyes Quiroz"`
     * The `fecha` variable in line 33. Change the date to indicate when you retreived the data in step 2. `fecha <- "5 de Febrero del 2020"`
