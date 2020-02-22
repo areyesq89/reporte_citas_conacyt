@@ -8,8 +8,8 @@ This type of reports are often requested in applications for the SNI of CONACYT 
 
 These are the instructions that I followed to get my citation report:
 
-1. Update your ORCID. Then download your list of publications from Web of Science by following these steps: Log in to Web of Science -> Author Search -> Web of Science ResearcherID or ORCID Search and add your ORCID -> View as a set of results to export -> Export as "Fast 5K"
-2. For each of the articles that you downloaded in step 1, export the list of citations of each article also using "Fast 5K".
+1. Update your ORCID. Then download your list of publications from Web of Science by following these steps: Log in to Web of Science -> Author Search -> Web of Science ResearcherID or ORCID Search and add your ORCID -> View as a set of results to export -> Export as "Fast 5K" format.
+2. For each of the articles that you downloaded in step 1, export the list of citations of each article also using the "Fast 5K" format.
 3. Modify the file that you downloaded in step 1 to create a tab separated file that looks like [this](https://github.com/areyesq89/reporte_citas_conacyt/blob/master/generalize/00_mypubs_simple.tsv). In this file each row corresponds to a
 publication and the expected columns are:
 
