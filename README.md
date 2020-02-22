@@ -8,8 +8,8 @@ This type of reports are often requested in applications for the SNI of CONACYT 
 
 These are the instructions that I followed to get my citation report:
 
-1. Update your ORCID. Then download your list of publications from Web of Science by following these steps: Log in to Web of Science -> Author Search -> Web of Science ResearcherID or ORCID Search and add your ORCID -> View as a set of results to export -> Export as "Fast 5K" format.
-2. For each of the articles that you downloaded in step 1, export the list of citations of each article also using the "Fast 5K" format.
+1. Update your ORCID. Then download your list of publications from Web of Science by following these steps: Log in to Web of Science -> Author Search -> Web of Science ResearcherID or ORCID Search and add your ORCID -> View as a set of results to export -> Export as "Fast 5K" format. The downloaded file should look like [this](https://github.com/areyesq89/reporte_citas_conacyt/blob/master/data/raw/00_mypubs.tsv)
+2. For each of the articles in the file downloaded in step 1, look for the article in Web Of Science and export the list of citations of each article also using the "Fast 5K" format. The steps to download this file for one article are: Basic Search -> Click on the article -> Click in the "Times cited" link -> Export as "Fast 5K" format. Each downloaded file should look like [this](https://github.com/areyesq89/reporte_citas_conacyt/blob/master/data/raw/2012_GENOMERESEARCH_detecting.tsv)
 3. Modify the file that you downloaded in step 1 to create a tab separated file that looks like [this](https://github.com/areyesq89/reporte_citas_conacyt/blob/master/generalize/00_mypubs_simple.tsv). In this file each row corresponds to a
 publication and the expected columns are:
 
