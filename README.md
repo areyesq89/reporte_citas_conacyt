@@ -2,7 +2,7 @@
 
 This repository contains instructions to generate a citation report for a list of articles using R and Rmarkdown in a semi-automatic manner. 
 An example of the output generated can be found [here.](https://github.com/areyesq89/reporte_citas_conacyt/blob/master/generalize/general_conacyt.pdf)
-This type of reports are often requested in applications for the SNI of CONACYT in Mexico. 
+This type of reports are often requested in applications for the SNI of CONACYT in Mexico. This repository serves as notes to Alejandro of the future, but I make them public in case someone else finds it useful.
 
 # Instructions
 
