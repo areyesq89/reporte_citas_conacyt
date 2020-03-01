@@ -3,6 +3,11 @@
 This repository contains instructions to generate a citation report for a list of articles using R and Rmarkdown in a semi-automatic manner. 
 An example of the output generated can be found [here.](https://github.com/areyesq89/reporte_citas_conacyt/blob/master/generalize/general_conacyt.pdf) The output of the workflow is a Word document that can be further customized. These types of reports are often requested in applications for the SNI of CONACYT in Mexico. This repository serves as notes to Alejandro of the future, but I make these notes public in case someone else finds them useful.
 
+# Software requirements
+
+   + R/Rstudio
+   + R packages tidyverse, magrittr and data.table. 
+
 # Instructions
 
 These are the instructions that I followed to get my citation report:
