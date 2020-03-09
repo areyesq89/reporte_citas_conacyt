@@ -33,7 +33,7 @@ library(magrittr)
 fecha <- "5 de Febrero del 2020"
 
 ## Change the line below to add the path to the tsv with your list of publications ###
-myPubs <- read.delim("00_mypubs_simple.tsv")
+myPubs <- read.delim("../data/raw/01.EIL_pubs.tsv")
 
 myPubs <- myPubs[order(myPubs$PY, decreasing=TRUE),]
 myPubs$myid <- sprintf("obra%0.4d", seq_len(nrow(myPubs)))
@@ -43,11 +43,13 @@ dataPath <- file.path("..", "data", "raw")
 
 allCitations <- lapply( seq_len(nrow(myPubs)), function(i){
   fl <- file.path( dataPath, as.character(myPubs$FL[i]) )
-  stopifnot( file.exists( fl ) )
+  if( !file.exists( fl ) )
+    stop(sprintf("File %s could not be found", fl))
   authors <- strsplit( as.character(myPubs$AU)[i], "; " )[[1]]
   dat <- data.table::fread( fl, sep="\t", quote="", header=FALSE, 
                             select=c(2, 10, 18, 29, 33) )
   colnames(dat) <- c("AU", "TI", "SO", "DI", "PY" )
+  dat <- tidyr::as_tibble(dat)
   dat$PT_split <- strsplit( as.character(dat$AU), "; " )
   dat$citingid <- sprintf("pub%0.8d", seq_len(nrow(dat)))
   autorData <- tidyr::unnest(dat[,c("PT_split", "citingid")], cols = c(PT_split))
