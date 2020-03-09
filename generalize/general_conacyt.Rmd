@@ -17,7 +17,7 @@ output:
 ---
 
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set( echo = FALSE, cache=FALSE, message=FALSE )
+knitr::opts_chunk$set( echo = FALSE, cache=FALSE, message=FALSE, warning = FALSE )
 ```
 
 ```{=openxml}
@@ -42,12 +42,16 @@ myPubs$myid <- sprintf("obra%0.4d", seq_len(nrow(myPubs)))
 dataPath <- file.path("..", "data", "raw")
 
 allCitations <- lapply( seq_len(nrow(myPubs)), function(i){
+  print(i)
   fl <- file.path( dataPath, as.character(myPubs$FL[i]) )
   if( !file.exists( fl ) )
     stop(sprintf("File %s could not be found", fl))
   authors <- strsplit( as.character(myPubs$AU)[i], "; " )[[1]]
   dat <- data.table::fread( fl, sep="\t", quote="", header=FALSE, 
                             select=c(2, 10, 18, 29, 33) )
+  if( nrow(dat) ==0 ){
+    return(NULL)
+  }
   colnames(dat) <- c("AU", "TI", "SO", "DI", "PY" )
   dat <- tidyr::as_tibble(dat)
   dat$PT_split <- strsplit( as.character(dat$AU), "; " )
@@ -64,6 +68,8 @@ allCitations <- lapply( seq_len(nrow(myPubs)), function(i){
 
 allCitations <- dplyr::bind_rows( allCitations )
 allCitations <- allCitations[!is.na(allCitations$is_autocitation),]
+
+allCitations$is_citing <- factor( allCitations$is_citing, levels=as.character(myPubs$myid) )
 
 tr_citas <- allCitations %>%
     dplyr::mutate( tipo=factor(ifelse( is_autocitation, "# citas tipo B", 
