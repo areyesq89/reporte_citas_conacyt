@@ -14,11 +14,14 @@ output:
     number_sections: yes
     df_print: paged
     toc: yes
+abstract:
+  Este documento fue generado automáticamente por código escrito por [Alejandro Reyes](http://alejandroreyes.org/). El código es abierto y está disponible a través de [Github](https://github.com/areyesq89/reporte_citas_conacyt) bajo la licencia de MIT.
 ---
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set( echo = FALSE, cache=FALSE, message=FALSE, warning = FALSE )
 ```
+
 
 ```{=openxml}
 <w:p><w:r><w:br w:type="page"/></w:r></w:p>
