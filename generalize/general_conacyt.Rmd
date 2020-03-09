@@ -42,7 +42,6 @@ myPubs$myid <- sprintf("obra%0.4d", seq_len(nrow(myPubs)))
 dataPath <- file.path("..", "data", "raw")
 
 allCitations <- lapply( seq_len(nrow(myPubs)), function(i){
-  print(i)
   fl <- file.path( dataPath, as.character(myPubs$FL[i]) )
   if( !file.exists( fl ) )
     stop(sprintf("File %s could not be found", fl))
